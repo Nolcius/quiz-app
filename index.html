@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#534AB7">
+
+  <title>Quiz Culture Générale</title>
+
+  <style>
+    /* 👉 colle TON CSS ici (tout ce que t’as déjà) */
+  </style>
+</head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#534AB7">
+<body>
+
+ 
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #app { padding: 1rem 0; min-height: 500px; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .header { text-align: center; margin-bottom: 1.5rem; }
+  .header h1 { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .header p { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+  .score-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; font-size: 13px; color: var(--color-text-secondary); }
+  .score-badge { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 4px 10px; font-weight: 500; color: var(--color-text-primary); }
+  .progress-bar { height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-bottom: 1.25rem; }
+  .progress-fill { height: 4px; background: #7F77DD; border-radius: 2px; transition: width 0.4s ease; }
+  .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .cat-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem; cursor: pointer; text-align: center; transition: border-color 0.15s, transform 0.1s; }
+  .cat-card:hover { border-color: var(--color-border-secondary); transform: scale(1.01); }
+  .cat-card:active { transform: scale(0.97); }
+  .cat-icon { font-size: 28px; margin-bottom: 6px; }
+  .cat-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .cat-count { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .question-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .question-num { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; }
+  .question-text { font-size: 15px; font-weight: 500; color: var(--color-text-primary); line-height: 1.5; }
+  .answers { display: flex; flex-direction: column; gap: 8px; }
+  .answer-btn { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px 16px; text-align: left; font-size: 14px; color: var(--color-text-primary); cursor: pointer; transition: all 0.15s; line-height: 1.4; }
+  .answer-btn:hover:not(:disabled) { border-color: var(--color-border-secondary); background: var(--color-background-secondary); }
+  .answer-btn.correct { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
+  .answer-btn.wrong { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; }
+  .answer-btn:disabled { cursor: default; }
+  .feedback { border-radius: var(--border-radius-md); padding: 10px 14px; font-size: 13px; margin-top: 10px; display: none; line-height: 1.5; }
+  .feedback.show { display: block; }
+  .feedback.correct { background: #EAF3DE; color: #3B6D11; }
+  .feedback.wrong { background: #FCEBEB; color: #A32D2D; }
+  .next-btn { width: 100%; margin-top: 1rem; padding: 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); font-size: 14px; font-weight: 500; color: var(--color-text-primary); cursor: pointer; display: none; }
+  .next-btn.show { display: block; }
+  .next-btn:hover { background: var(--color-background-secondary); }
+  .result-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.5rem; text-align: center; margin-bottom: 1rem; }
+  .result-score { font-size: 48px; font-weight: 500; color: var(--color-text-primary); }
+  .result-label { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+  .result-msg { font-size: 15px; color: var(--color-text-primary); margin-top: 1rem; font-weight: 500; }
+  .result-emoji { font-size: 36px; margin-bottom: 8px; }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row button { flex: 1; padding: 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); font-size: 14px; color: var(--color-text-primary); cursor: pointer; }
+  .btn-row button:hover { background: var(--color-background-secondary); }
+  .btn-row .primary-btn { background: #534AB7; color: #EEEDFE; border-color: #534AB7; }
+  .btn-row .primary-btn:hover { background: #7F77DD; border-color: #7F77DD; }
+  .streak-badge { font-size: 12px; color: #854F0B; background: #FAEEDA; border-radius: var(--border-radius-md); padding: 3px 8px; }
+  .diff-badge { font-size: 11px; padding: 2px 7px; border-radius: var(--border-radius-md); margin-left: 6px; }
+  .diff-hard { background: #FCEBEB; color: #A32D2D; }
+  .diff-medium { background: #FAEEDA; color: #854F0B; }
+</style>
+
+<div id="app">
+  <div id="home" class="screen active">
+    <div class="header">
+      <h1>Culture Générale</h1>
+      <p>Choisis une catégorie pour jouer</p>
+    </div>
+    <div class="cat-grid" id="cat-grid"></div>
+  </div>
+  <div id="quiz" class="screen">
+    <div class="score-bar">
+      <span id="cat-label" class="score-badge"></span>
+      <span>Score : <strong id="score-display">0</strong></span>
+      <span id="streak-display" class="streak-badge" style="display:none"></span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="question-card">
+      <div class="question-num" id="question-num"></div>
+      <div class="question-text" id="question-text"></div>
+    </div>
+    <div class="answers" id="answers"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Question suivante →</button>
+  </div>
+  <div id="result" class="screen">
+    <div class="header"><h1>Résultat</h1></div>
+    <div class="result-card">
+      <div class="result-emoji" id="result-emoji"></div>
+      <div class="result-score" id="result-score"></div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-msg" id="result-msg"></div>
+    </div>
+    <div class="btn-row">
+      <button onclick="replayCategory()">Rejouer</button>
+      <button class="primary-btn" onclick="goHome()">Autres catégories</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  jeux: {
+    name: "Jeux Vidéo", icon: "🎮",
+    questions: [
+      { q: "Quel est le nom du boss final de Dark Souls 1 ?", a: ["Gwyn, Lord of Cinder","Seath the Scaleless","Manus","The Nameless King"], correct: 0, expl: "Gwyn, Seigneur des Cendres, est le boss final de Dark Souls. Il a sacrifié son âme pour prolonger l'Âge du Feu." },
+      { q: "Dans Hollow Knight, quel est le nom du 'Pale King' en français officiel ?", a: ["Le Roi Pâle","Le Roi Blanc","Le Roi des Âmes","L'Ancien Roi"], correct: 0, expl: "Le Roi Pâle est le dirigeant de Hallownest, créateur de la Pure Vessel et père du chevalier." },
+      { q: "Quel moteur graphique propulse la série The Witcher 3 ?", a: ["REDengine 3","Unreal Engine 4","CryEngine","Decima"], correct: 0, expl: "CD Projekt RED a développé son propre moteur, le REDengine 3, pour The Witcher 3." },
+      { q: "Dans Metal Gear Solid 3, quel surnom porte le personnage de The Boss ?", a: ["La Joy","La Mère des Soldats","La Légende","The Ancient"], correct: 1, expl: "The Boss est surnommée 'La Mère des Soldats' — elle a fondé les Forces Spéciales américaines et était la mentore de Naked Snake." },
+      { q: "Quel jeu a introduit le concept de 'New Game+' pour la première fois ?", a: ["Chrono Trigger","Final Fantasy VI","Secret of Mana","Zelda : A Link to the Past"], correct: 0, expl: "Chrono Trigger (1995) est crédité d'avoir popularisé le New Game+, permettant de rejouer avec ses items et niveaux." },
+      { q: "Combien d'îles composent la carte principale de Elden Ring (Lands Between) ?", a: ["Aucune île, c'est un continent","6 régions principales","Il y a les Îles des Géants","2 zones insulaires"], correct: 0, expl: "The Lands Between est un continent continental. Les Îles des Géants sont une région nordique, pas des îles séparées." },
+      { q: "Dans Bloodborne, quel est le nom de la ville où se déroule le jeu ?", a: ["Yharnam","Lorion","Cainhurst","Byrgenwerth"], correct: 0, expl: "Yharnam est une ville victorienne gothique ravagée par la malédiction du sang et peuplée de bêtes." },
+      { q: "Quel studio a développé Disco Elysium ?", a: ["ZA/UM","Larian Studios","Obsidian","InXile"], correct: 0, expl: "ZA/UM, studio estonien fondé par Robert Kurvitz, a développé Disco Elysium sorti en 2019." },
+      { q: "Dans Final Fantasy VII, quel est le vrai nom de 'Cloud Strife' selon le lore étendu ?", a: ["Cloud Strife est son vrai nom","Zack Fair","Sephiroth Clone n°2","Sol Teth Adam"], correct: 0, expl: "Cloud Strife est bien son vrai nom. La confusion vient de ses faux souvenirs mélangés avec ceux de Zack Fair." },
+      { q: "Quel personnage de Mortal Kombat est connu pour sa fatalité 'Spine Rip' iconique ?", a: ["Kano","Sub-Zero","Goro","Scorpion"], correct: 1, expl: "Sub-Zero est célèbre pour arracher la colonne vertébrale et le crâne de ses adversaires — une des fatalités les plus iconiques de la saga." },
+      { q: "Dans Hades (2020), qui est le personnage principal ?", a: ["Zagreus","Thanatos","Hypnos","Achille"], correct: 0, expl: "Zagreus est le fils d'Hadès qui tente de s'échapper des Enfers — le protagoniste du rogue-like de Supergiant Games." },
+      { q: "Quel jeu PC a popularisé le genre 'battle royale' avant PUBG et Fortnite ?", a: ["DayZ Battle Royale (mod Arma 2)","H1Z1","Rust","Minecraft Hunger Games"], correct: 0, expl: "Le mod Battle Royale pour Arma 2 (DayZ), créé par Brendan Greene (PlayerUnknown), est l'ancêtre direct du genre." },
+      { q: "Combien de fins différentes possède le jeu NieR: Automata ?", a: ["26","5","13","9"], correct: 0, expl: "NieR: Automata possède 26 fins, numérotées de A à Z. Les fins A à E sont les principales, les autres sont souvent des fins 'jokes'." },
+      { q: "Quel est le nom du compositeur de la bande-son de NieR: Automata ?", a: ["Keiichi Okabe","Nobuo Uematsu","Yasunori Mitsuda","Yoko Shimomura"], correct: 0, expl: "Keiichi Okabe a composé la magnifique OST de NieR: Automata avec le groupe MONACA." },
+      { q: "Dans Sekiro, que signifie 'Sekiro' en japonais ?", a: ["Le loup manchot","Le bras de fer","L'ombre tranchante","Le sabre rouge"], correct: 0, expl: "Sekiro (隻狼) signifie littéralement 'le loup manchot' — une référence au bras perdu du protagoniste Wolf." },
+      { q: "Quel jeu de FromSoftware se déroule dans un monde appelé 'Lothric' ?", a: ["Dark Souls III","Dark Souls II","Elden Ring","Demon's Souls"], correct: 0, expl: "Lothric est le royaume de Dark Souls III, né de la fusion des royaumes de Lorian et Lothric." },
+      { q: "Dans Celeste, quel est le nom complet de la protagoniste ?", a: ["Madeline","Alex","Celeste","Theo"], correct: 0, expl: "La protagoniste s'appelle Madeline. Le mont qu'elle gravit s'appelle Celeste — c'est le nom du jeu, pas du personnage." },
+      { q: "Quel est le vrai nom de 'Solid Snake' dans Metal Gear Solid 1 ?", a: ["David","Jack","John","Eli"], correct: 0, expl: "Solid Snake s'appelle David dans le civil. Big Boss (Naked Snake) s'appelait John — les deux sont des clones de Big Boss." },
+      { q: "Dans Undertale, quel personnage dit 'You are filled with DETERMINATION' ?", a: ["Le narrateur / la sauvegarde","Flowey","Sans","Toriel"], correct: 0, expl: "C'est le texte affiché lors des sauvegardes — la Détermination est la force qui permet de SAVE et LOAD dans l'univers." },
+      { q: "Quel est le nom du village de départ dans The Legend of Zelda: Ocarina of Time ?", a: ["Kokiri Village","Kakariko","Lon Lon Ranch","Hyrule Castle Town"], correct: 0, expl: "Kokiri Village est le village des enfants de la forêt où Link grandit, protégé par la Grande Fée Mojo." },
+      { q: "Dans Resident Evil 4 Remake (2023), quel acteur prête sa voix à Leon S. Kennedy ?", a: ["Nick Apostolides","Matthew Mercer","Paul Mercier","Roger Craig Smith"], correct: 0, expl: "Nick Apostolides reprend le rôle de Leon dans le Remake de RE4, après l'avoir doublé dans RE: Infinite Darkness." },
+      { q: "Quel FPS de 1993 a révolutionné le genre et popularisé le terme 'Doom-like' ?", a: ["DOOM","Wolfenstein 3D","Quake","Duke Nukem 3D"], correct: 0, expl: "DOOM d'id Software (1993) a défini le FPS tel qu'on le connaît. Wolfenstein 3D le précède mais DOOM a popularisé le genre." },
+      { q: "Dans Persona 5, quel est le nom de code du protagoniste dans les Palais ?", a: ["Joker","Skull","Panther","Fox"], correct: 0, expl: "Le protagoniste (Akira Kurusu / Ren Amamiya selon l'adaptation) porte le surnom 'Joker' au sein des Phantom Thieves." },
+      { q: "Quel studio japonais a créé la saga Yakuza (Like a Dragon) ?", a: ["Ryu Ga Gotoku Studio","Sega AM1","PlatinumGames","Atlus"], correct: 0, expl: "Ryu Ga Gotoku Studio, division interne de Sega, développe la saga Yakuza depuis 2005." },
+      { q: "Dans StarCraft, quelle race utilise des unités comme le Zergling et le Hydralisk ?", a: ["Zerg","Protoss","Terran","Xel'Naga"], correct: 0, expl: "Les Zerg sont une race de créatures biologiques parasites, avec les Zerglings et les Hydralisques comme unités de base." },
+      { q: "Quel est le nom du dieu de la mort dans God of War (2018) ?", a: ["Baldur est le boss principal, pas le dieu de la mort","Hel","Odin","Loki"], correct: 0, expl: "Dans la mythologie nordique du jeu, Hel gouverne le royaume des morts. Baldur est le fils d'Odin et boss principal." },
+      { q: "Dans Half-Life 2, quel est le nom de la compagne robot de Gordon Freeman ?", a: ["Alyx Vance n'est pas un robot — Dog est le robot d'Alyx","GLADOS","Judith Mossman","Chell"], correct: 0, expl: "Dog est le robot d'Alyx Vance dans Half-Life 2. Alyx elle-même est humaine. GLaDOS appartient à Portal." },
+      { q: "Combien de classes de personnages peut-on jouer dans Diablo II ?", a: ["5","6","7","4"], correct: 0, expl: "Diablo II propose 5 classes : Barbare, Nécromancien, Paladin, Sorcière et Amazone." },
+      { q: "Quel est le nom de l'antagoniste principal de Baldur's Gate 3 ?", a: ["L'Absolute / les Nécromithides","Jon Irenicus","Bhaal","Mindflayer Elder Brain"], correct: 3, expl: "L'Elder Brain contrôlé par les Nécromithides (Illithids) est le véritable antagoniste de BG3, orchestrant tout depuis les coulisses." },
+      { q: "Dans Hollow Knight, quel est le nom de la zone finale avant le boss final ?", a: ["The Abyss","The Hive","Ancient Basin","Deepnest"], correct: 0, expl: "The Abyss est la zone la plus profonde de Hallownest où fut créé le Vide — c'est là qu'on obtient la capacité du Vide." },
+    ]
+  },
+  musique: {
+    name: "Musique", icon: "🎵",
+    questions: [
+      { q: "Qui a composé la 5ème Symphonie en Ut mineur ?", a: ["Beethoven","Mozart","Bach","Chopin"], correct: 0, expl: "Beethoven a composé sa célèbre 5ème symphonie entre 1804 et 1808." },
+      { q: "Quel groupe est derrière l'album 'Thriller' (1982) ?", a: ["Michael Jackson","Prince","Madonna","Whitney Houston"], correct: 0, expl: "Thriller est l'album de Michael Jackson le plus vendu de l'histoire avec plus de 66 millions d'exemplaires." },
+      { q: "De quel pays vient le groupe ABBA ?", a: ["Suède","Norvège","Danemark","Finlande"], correct: 0, expl: "ABBA est un groupe pop suédois formé à Stockholm en 1972." },
+      { q: "Quel instrument joue Eric Clapton ?", a: ["Guitare","Basse","Batterie","Piano"], correct: 0, expl: "Eric Clapton est l'une des légendes de la guitare rock et blues." },
+      { q: "Comment s'appelle le chanteur des Red Hot Chili Peppers ?", a: ["Anthony Kiedis","Dave Grohl","Kurt Cobain","Eddie Vedder"], correct: 0, expl: "Anthony Kiedis est le chanteur et co-fondateur des RHCP depuis 1983." },
+      { q: "Quel est le vrai nom de Lady Gaga ?", a: ["Stefani Germanotta","Alicia Moore","Ella Yelich","Melissa Jefferson"], correct: 0, expl: "Lady Gaga est le nom de scène de Stefani Joanne Angelina Germanotta." },
+      { q: "Quelle artiste a sorti l'album 'Lemonade' en 2016 ?", a: ["Beyoncé","Rihanna","Adele","Taylor Swift"], correct: 0, expl: "Lemonade est le 6ème album solo de Beyoncé, sorti en avril 2016." },
+      { q: "Combien de membres composait le groupe The Beatles ?", a: ["4","5","3","6"], correct: 0, expl: "Lennon, McCartney, Harrison et Starr — les Fab Four." },
+      { q: "Quel album de Nirvana a rendu le groupe mondialement célèbre en 1991 ?", a: ["Nevermind","Bleach","In Utero","MTV Unplugged"], correct: 0, expl: "Nevermind (1991) contient 'Smells Like Teen Spirit' et a propulsé Nirvana au sommet." },
+      { q: "Quel est le nom de l'album de Daft Punk sorti en 2001 ?", a: ["Discovery","Homework","Random Access Memories","Human After All"], correct: 0, expl: "Discovery (2001) contient des tubes comme 'One More Time', 'Harder Better Faster Stronger'." },
+      { q: "Quel groupe a sorti l'album 'Dark Side of the Moon' en 1973 ?", a: ["Pink Floyd","Led Zeppelin","The Who","Genesis"], correct: 0, expl: "The Dark Side of the Moon de Pink Floyd est l'un des albums les plus vendus de l'histoire." },
+      { q: "Quel chanteur français est surnommé 'Le Grand Blond' et a popularisé le reggae en France ?", a: ["Serge Gainsbourg","Jacques Higelin","Alain Bashung","Bernard Lavilliers"], correct: 3, expl: "Bernard Lavilliers est surnommé le Grand Blond et a mélangé rock et musiques du monde dont le reggae." },
+      { q: "Dans quelle ville est né Freddie Mercury ?", a: ["Stone Town, Zanzibar","Mumbai","Londres","Le Caire"], correct: 0, expl: "Freddie Mercury (Farrokh Bulsara) est né le 5 septembre 1946 à Stone Town, à Zanzibar (Tanzanie)." },
+      { q: "Quel compositeur est connu pour 'Les Quatre Saisons' ?", a: ["Vivaldi","Bach","Haendel","Telemann"], correct: 0, expl: "Antonio Vivaldi a composé Les Quatre Saisons vers 1720, un des concertos pour violon les plus connus." },
+      { q: "Quel artiste a sorti 'The Eminem Show' en 2002 ?", a: ["Eminem","Jay-Z","50 Cent","Dr. Dre"], correct: 0, expl: "The Eminem Show est le quatrième album studio d'Eminem, certifié diamant aux USA." },
+      { q: "Quelle chanteuse française a représenté la France à l'Eurovision 2021 ?", a: ["Barbara Pravi","Angèle","Indila","Clara Luciani"], correct: 0, expl: "Barbara Pravi a terminé 2ème avec 'Voilà' — le meilleur résultat de la France à l'Eurovision depuis des décennies." },
+      { q: "Quel est l'instrument principal de Miles Davis ?", a: ["Trompette","Saxophone","Contrebasse","Piano"], correct: 0, expl: "Miles Davis est l'un des plus grands trompettistes de jazz, connu notamment pour 'Kind of Blue' (1959)." },
+      { q: "Quel groupe de metal est derrière l'album 'Master of Puppets' (1986) ?", a: ["Metallica","Slayer","Megadeth","Iron Maiden"], correct: 0, expl: "Master of Puppets est le troisième album de Metallica, considéré comme l'un des meilleurs albums metal de l'histoire." },
+      { q: "Quel rappeur français est derrière l'album '93 Empire' ?", a: ["Booba","Rohff","La Fouine","Rim-K"], correct: 0, expl: "Booba a sorti '92 i lvcha' mais '93 Empire' est de Booba sorti en 2008 — référence au 93, la Seine-Saint-Denis." },
+      { q: "Combien de notes composent une gamme majeure classique ?", a: ["7","5","8","6"], correct: 0, expl: "Une gamme majeure comprend 7 notes (Do-Ré-Mi-Fa-Sol-La-Si), l'octave étant la répétition de la tonique." },
+      { q: "Quel groupe britannique est formé de Thom Yorke et s'appelle également 'Radiohead' ?", a: ["Radiohead","Blur","Oasis","Portishead"], correct: 0, expl: "Radiohead est un groupe de rock alternatif formé à Oxford, mené par Thom Yorke." },
+      { q: "Qui est l'auteur de l'opéra 'La Traviata' ?", a: ["Verdi","Puccini","Mozart","Wagner"], correct: 0, expl: "La Traviata est un opéra de Giuseppe Verdi, créé en 1853, basé sur 'La Dame aux camélias' d'Alexandre Dumas fils." },
+      { q: "Quel rappeur américain a sorti 'DAMN.' en 2017, remportant un Prix Pulitzer ?", a: ["Kendrick Lamar","Drake","J. Cole","Kanye West"], correct: 0, expl: "Kendrick Lamar a reçu le Prix Pulitzer de musique en 2018 pour DAMN. — une première pour un artiste non classique ou jazz." },
+    ]
+  },
+  cinema: {
+    name: "Cinéma", icon: "🎬",
+    questions: [
+      { q: "Qui a réalisé le film 'Inception' (2010) ?", a: ["Christopher Nolan","Ridley Scott","James Cameron","Steven Spielberg"], correct: 0, expl: "Christopher Nolan a réalisé Inception avec Leonardo DiCaprio, film sur les rêves dans les rêves." },
+      { q: "Dans quelle saga retrouve-t-on Darth Vader ?", a: ["Star Wars","Star Trek","Dune","Matrix"], correct: 0, expl: "Darth Vader (Anakin Skywalker) est le grand méchant de la saga Star Wars de George Lucas." },
+      { q: "Quel film a remporté l'Oscar du meilleur film en 1994 ?", a: ["Forrest Gump","Pulp Fiction","The Shawshank Redemption","Léon"], correct: 0, expl: "Forrest Gump de Robert Zemeckis a remporté 6 Oscars dont Meilleur Film et Meilleur Réalisateur." },
+      { q: "Combien d'oscars a remporté 'Titanic' en 1998 ?", a: ["11","9","14","7"], correct: 0, expl: "Titanic a remporté 11 Oscars, égalant le record de Ben-Hur puis Lord of the Rings: The Return of the King." },
+      { q: "Qui joue Tony Stark dans le MCU ?", a: ["Robert Downey Jr.","Chris Evans","Chris Hemsworth","Mark Ruffalo"], correct: 0, expl: "Robert Downey Jr. incarne Iron Man depuis le film de 2008 jusqu'à Endgame en 2019." },
+      { q: "Quel réalisateur est derrière 'Pulp Fiction' et 'Kill Bill' ?", a: ["Quentin Tarantino","Martin Scorsese","David Fincher","Les Coen Brothers"], correct: 0, expl: "Quentin Tarantino est célèbre pour ses dialogues percutants, ses nonlinéarités narratives et ses références cinéphiles." },
+      { q: "Dans 'Le Seigneur des Anneaux', qui incarne Gandalf ?", a: ["Ian McKellen","Anthony Hopkins","Christopher Lee","Patrick Stewart"], correct: 0, expl: "Ian McKellen joue Gandalf le Gris (puis le Blanc) dans la trilogie de Peter Jackson." },
+      { q: "Quel film d'animation Pixar raconte l'histoire d'un robot nettoyeur ?", a: ["WALL-E","Robots","Interstellar (non, ce n'est pas Pixar)","Treasure Planet"], correct: 0, expl: "WALL-E (2008) de Pixar suit un petit robot solitaire sur une Terre abandonnée." },
+      { q: "Qui a réalisé 'La La Land' (2016) ?", a: ["Damien Chazelle","Woody Allen","Paul Thomas Anderson","Wes Anderson"], correct: 0, expl: "Damien Chazelle a réalisé La La Land, qui a remporté 6 Oscars dont Meilleur Réalisateur." },
+      { q: "Dans quel film de Kubrick Jack Nicholson joue-t-il Jack Torrance ?", a: ["The Shining","A Clockwork Orange","Full Metal Jacket","Eyes Wide Shut"], correct: 0, expl: "The Shining (1980) adapte le roman de Stephen King — 'Here's Johnny !' est sa réplique culte." },
+      { q: "Quel acteur joue le Joker dans 'The Dark Knight' (2008) ?", a: ["Heath Ledger","Jared Leto","Joaquin Phoenix","Jack Nicholson"], correct: 0, expl: "Heath Ledger a remporté l'Oscar posthume du Meilleur Second Rôle pour son Joker inoubliable." },
+      { q: "Qui a réalisé 'Les Dents de la Mer' (Jaws, 1975) ?", a: ["Steven Spielberg","John Carpenter","Brian De Palma","George Lucas"], correct: 0, expl: "Jaws de Spielberg est considéré comme le premier 'blockbuster' de l'histoire du cinéma." },
+      { q: "Dans '2001, l'Odyssée de l'Espace', quel est le nom de l'IA antagoniste ?", a: ["HAL 9000","SKYNET","GLaDOS","SHODAN"], correct: 0, expl: "HAL 9000 est l'intelligence artificielle du film de Kubrick, célèbre pour 'I'm sorry Dave, I'm afraid I can't do that'." },
+      { q: "Quel film de Christopher Nolan raconte l'histoire de la bataille de Dunkerque ?", a: ["Dunkirk","The Dark Knight","Interstellar","Tenet"], correct: 0, expl: "Dunkirk (2017) raconte l'évacuation de Dunkerque en 1940, filmé avec un minimum de dialogues." },
+      { q: "Quel acteur français a joué dans 'Léon' et 'Le Grand Bleu' ?", a: ["Jean Reno","Gérard Depardieu","Vincent Cassel","Daniel Auteuil"], correct: 0, expl: "Jean Reno est célèbre pour ses rôles dans Léon (1994) et Le Grand Bleu (1988) de Luc Besson." },
+      { q: "Dans 'Parasite' (2019), quelle récompense Bong Joon-ho a-t-il remporté à Cannes ?", a: ["Palme d'Or","Grand Prix","Prix du Jury","Prix de la mise en scène"], correct: 0, expl: "Parasite a reçu la Palme d'Or à Cannes 2019, puis l'Oscar du Meilleur Film — une première pour un film non anglophone." },
+      { q: "Quel film de science-fiction de 1982 met en scène un extraterrestre abandonné sur Terre ?", a: ["E.T.","Alien","The Thing","Cocoon"], correct: 0, expl: "E.T. l'extra-terrestre de Steven Spielberg est l'un des films les plus émouvants et rentables des années 80." },
+      { q: "Qui joue le rôle de Hannibal Lecter dans 'Le Silence des Agneaux' (1991) ?", a: ["Anthony Hopkins","Gary Oldman","Brian Cox","Tim Roth"], correct: 0, expl: "Anthony Hopkins a remporté l'Oscar du Meilleur Acteur pour ce rôle, malgré seulement 16 minutes à l'écran." },
+      { q: "Quel réalisateur est derrière 'Spirited Away' (Le Voyage de Chihiro) ?", a: ["Hayao Miyazaki","Isao Takahata","Makoto Shinkai","Satoshi Kon"], correct: 0, expl: "Hayao Miyazaki a réalisé Le Voyage de Chihiro (2001), Oscar du Meilleur Film d'Animation en 2003." },
+      { q: "Dans 'Matrix', quelle pilule Neo prend-il pour voir la vérité ?", a: ["La rouge","La bleue","La verte","La noire"], correct: 0, expl: "Morpheus propose deux pilules : la bleue (continuer à ignorer la vérité) ou la rouge (découvrir la réalité de Matrix)." },
+      { q: "Quel film de David Fincher suit un tueur en série qui s'inspire des 7 péchés capitaux ?", a: ["Se7en","Zodiac","Fight Club","Gone Girl"], correct: 0, expl: "Se7en (1995) avec Brad Pitt et Morgan Freeman suit l'enquête sur un tueur obsédé par les sept péchés capitaux." },
+      { q: "Qui a composé la musique de la saga 'Star Wars' ?", a: ["John Williams","Hans Zimmer","Ennio Morricone","Bernard Herrmann"], correct: 0, expl: "John Williams a composé toutes les musiques des films Star Wars, l'une des OST les plus reconnaissables au monde." },
+      { q: "Dans quel film Marlon Brando joue-t-il Don Vito Corleone ?", a: ["Le Parrain","Apocalypse Now","Un tramway nommé désir","Les Révoltés du Bounty"], correct: 0, expl: "Marlon Brando a remporté l'Oscar du Meilleur Acteur pour son rôle dans Le Parrain (1972) de Coppola." },
+    ]
+  },
+  sport: {
+    name: "Sport", icon: "⚽",
+    questions: [
+      { q: "Combien de joueurs compose une équipe de football sur le terrain ?", a: ["11","10","12","9"], correct: 0, expl: "Chaque équipe aligne 11 joueurs incluant le gardien de but." },
+      { q: "Quel pays a remporté la Coupe du Monde 2018 ?", a: ["France","Croatie","Belgique","Angleterre"], correct: 0, expl: "La France a battu la Croatie 4-2 en finale à Moscou le 15 juillet 2018." },
+      { q: "Dans quel sport utilise-t-on un volant ?", a: ["Badminton","Tennis","Squash","Padel"], correct: 0, expl: "Le volant (shuttlecock) est utilisé au badminton à la place d'une balle." },
+      { q: "Combien de points vaut un essai au rugby à XV ?", a: ["5","3","4","6"], correct: 0, expl: "Un essai vaut 5 points, la transformation réussie ajoute 2 points supplémentaires." },
+      { q: "Quel athlète détient le record du 100m avec 9.58 secondes ?", a: ["Usain Bolt","Tyson Gay","Asafa Powell","Justin Gatlin"], correct: 0, expl: "Usain Bolt a établi ce record mondial à Berlin le 16 août 2009." },
+      { q: "Combien de sets faut-il gagner en Grand Chelem chez les hommes ?", a: ["3","2","4","5"], correct: 0, expl: "Les hommes jouent au meilleur des 5 sets, il faut en gagner 3." },
+      { q: "Quel club détient le plus de titres en Ligue des Champions UEFA ?", a: ["Real Madrid","FC Barcelone","Bayern Munich","Liverpool"], correct: 0, expl: "Le Real Madrid a remporté la Ligue des Champions 15 fois (jusqu'en 2024)." },
+      { q: "En quelle année ont eu lieu les Jeux Olympiques de Paris ?", a: ["2024","2020","2028","2016"], correct: 0, expl: "Paris a accueilli les Jeux Olympiques d'été en 2024, 100 ans après avoir déjà organisé les JO de 1924." },
+      { q: "Qui est le meilleur buteur de l'histoire de la Ligue des Champions ?", a: ["Cristiano Ronaldo","Lionel Messi","Robert Lewandowski","Raúl"], correct: 0, expl: "Cristiano Ronaldo est le meilleur buteur de l'histoire de la Ligue des Champions avec plus de 140 buts." },
+      { q: "Quel pays a remporté le plus de médailles d'or aux JO de l'histoire ?", a: ["États-Unis","URSS","Chine","Allemagne"], correct: 0, expl: "Les États-Unis dominent le classement historique des Jeux Olympiques avec le plus grand nombre de médailles d'or." },
+      { q: "Dans quelle ville se situe le circuit de Formule 1 de Monaco ?", a: ["Monte-Carlo","Nice","Cannes","Menton"], correct: 0, expl: "Le Grand Prix de Monaco se déroule dans les rues de Monte-Carlo, la capitale de la Principauté." },
+      { q: "Combien de joueurs composent une équipe de basketball ?", a: ["5","6","7","4"], correct: 0, expl: "Une équipe de basketball aligne 5 joueurs sur le terrain, avec un maximum de 12 joueurs dans l'équipe." },
+      { q: "Quel nageur américain a remporté 23 médailles d'or olympiques ?", a: ["Michael Phelps","Ryan Lochte","Mark Spitz","Matt Biondi"], correct: 0, expl: "Michael Phelps est l'athlète le plus médaillé de l'histoire olympique avec 23 médailles d'or." },
+      { q: "Quel est le nom du trophée remis au vainqueur de la NBA ?", a: ["Larry O'Brien Trophy","Maurice Podoloff Trophy","Bill Russell Trophy","Red Auerbach Trophy"], correct: 0, expl: "Le Larry O'Brien Championship Trophy est remis au champion NBA depuis 1977, en honneur à l'ancien commissaire." },
+      { q: "Quelle équipe de football a remporté la première Coupe du Monde en 1930 ?", a: ["Uruguay","Argentine","Brésil","Italie"], correct: 0, expl: "L'Uruguay a remporté la première Coupe du Monde en 1930, organisée sur son sol, en battant l'Argentine 4-2 en finale." },
+      { q: "Quel sport pratique Novak Djokovic ?", a: ["Tennis","Squash","Badminton","Padel"], correct: 0, expl: "Novak Djokovic est un tennisman serbe, recordman du nombre de titres en Grand Chelem." },
+      { q: "Combien de km mesure un marathon ?", a: ["42,195 km","40 km","43 km","41,5 km"], correct: 0, expl: "Un marathon mesure exactement 42,195 km, distance standardisée depuis les JO de Londres en 1908." },
+      { q: "Quel français a remporté le Tour de France en 1985 ?", a: ["Bernard Hinault","Laurent Fignon","Lucien Van Impe","Raymond Poulidor"], correct: 0, expl: "Bernard Hinault a remporté son 5ème Tour de France en 1985, son dernier succès dans la Grande Boucle." },
+    ]
+  },
+  histoire: {
+    name: "Histoire", icon: "🏛️",
+    questions: [
+      { q: "En quelle année a eu lieu la Révolution française ?", a: ["1789","1776","1804","1815"], correct: 0, expl: "La Révolution française a débuté en 1789 avec la prise de la Bastille le 14 juillet." },
+      { q: "Qui était le premier président des États-Unis ?", a: ["George Washington","Abraham Lincoln","Thomas Jefferson","Benjamin Franklin"], correct: 0, expl: "George Washington a été élu premier président des USA en 1789 et a servi deux mandats." },
+      { q: "Quel empire était dirigé par Gengis Khan ?", a: ["Empire Mongol","Empire Ottoman","Empire Romain","Empire Perse"], correct: 0, expl: "Gengis Khan fonda l'Empire Mongol au XIIIème siècle, le plus grand empire contigu de l'histoire." },
+      { q: "En quelle année s'est terminée la Seconde Guerre Mondiale ?", a: ["1945","1944","1946","1943"], correct: 0, expl: "La Seconde Guerre Mondiale s'est terminée en 1945 — mai en Europe, septembre avec la capitulation du Japon." },
+      { q: "Qui a peint la Joconde ?", a: ["Léonard de Vinci","Michel-Ange","Raphaël","Botticelli"], correct: 0, expl: "La Joconde a été peinte par Léonard de Vinci vers 1503-1506, elle est aujourd'hui au Louvre à Paris." },
+      { q: "En quelle année est tombé le Mur de Berlin ?", a: ["1989","1991","1987","1993"], correct: 0, expl: "Le Mur de Berlin est tombé le 9 novembre 1989, marquant symboliquement la fin de la Guerre Froide." },
+      { q: "Quelle civilisation a construit les pyramides de Gizeh ?", a: ["Égyptiens","Sumériens","Grecs","Phéniciens"], correct: 0, expl: "Les pyramides de Gizeh ont été construites sous les pharaons de l'Ancien Empire (2600-2500 av. J.-C.)." },
+      { q: "Qui était Jules César ?", a: ["Général et homme politique romain","Roi de Rome","Pharaon d'Égypte","Philosophe grec"], correct: 0, expl: "Jules César était un général, dictateur et homme d'État romain assassiné aux Ides de Mars (-44)." },
+      { q: "Quelle guerre oppose la France et la Prusse en 1870-1871 ?", a: ["La guerre Franco-prussienne","La guerre de Crimée","La guerre de Sécession","La guerre des Boers"], correct: 0, expl: "La guerre franco-prussienne (1870-71) aboutit à la défaite de Napoléon III et la proclamation de la IIIème République." },
+      { q: "Quel traité met fin à la Première Guerre Mondiale ?", a: ["Le Traité de Versailles","Le Traité de Paris","L'Armistice de Compiègne","Le Traité de Trianon"], correct: 0, expl: "Le Traité de Versailles (28 juin 1919) met officiellement fin à la Première Guerre Mondiale." },
+      { q: "En quelle année Christophe Colomb arrive-t-il en Amérique ?", a: ["1492","1498","1488","1502"], correct: 0, expl: "Christophe Colomb arrive aux Bahamas le 12 octobre 1492, croyant avoir atteint l'Asie." },
+      { q: "Qui était Napoléon Bonaparte ?", a: ["Général et Empereur des Français","Roi de France","Président de la République","Duc de Bourgogne"], correct: 0, expl: "Napoléon Bonaparte fut Consul puis Empereur des Français de 1804 à 1815." },
+      { q: "En quelle année a eu lieu la Révolution russe bolchévique ?", a: ["1917","1905","1921","1914"], correct: 0, expl: "La Révolution d'Octobre 1917 renverse le gouvernement provisoire et porte les Bolchéviks au pouvoir." },
+      { q: "Quelle cité grecque antique était rivale d'Athènes et réputée pour ses guerriers ?", a: ["Sparte","Corinthe","Thèbes","Argos"], correct: 0, expl: "Sparte était une cité-état militariste dont les guerriers (les Spartiates) étaient réputés dans toute la Grèce." },
+      { q: "Quel pharaon est associé au Tombeau découvert intact par Howard Carter en 1922 ?", a: ["Toutânkhamon","Ramsès II","Cléopâtre","Akhenaton"], correct: 0, expl: "La tombe de Toutânkhamon (KV62) a été découverte dans la Vallée des Rois en novembre 1922." },
+      { q: "Quelle est la date de la Déclaration d'Indépendance américaine ?", a: ["4 juillet 1776","4 juillet 1789","14 juillet 1776","1er janvier 1776"], correct: 0, expl: "La Déclaration d'Indépendance a été adoptée le 4 juillet 1776 — d'où la fête nationale américaine." },
+      { q: "En quelle année Magellan entreprend-il le premier tour du monde ?", a: ["1519","1492","1498","1532"], correct: 0, expl: "Magellan entame le premier tour du monde en 1519. Il meurt aux Philippines en 1521 — Elcano ramène l'expédition." },
+      { q: "Quel empire a dominé la Méditerranée pendant des siècles depuis Rome ?", a: ["L'Empire Romain","L'Empire Byzantin","L'Empire Carthaginois","L'Empire Macédonien"], correct: 0, expl: "L'Empire Romain a dominé le bassin méditerranéen pendant plusieurs siècles, de 27 av. J.-C. à 476 ap. J.-C. pour l'Occident." },
+    ]
+  },
+  science: {
+    name: "Sciences", icon: "🔬",
+    questions: [
+      { q: "Quelle est la formule chimique de l'eau ?", a: ["H₂O","CO₂","NaCl","O₂"], correct: 0, expl: "L'eau est composée de deux atomes d'hydrogène et un atome d'oxygène." },
+      { q: "Combien de planètes composent notre système solaire ?", a: ["8","9","7","10"], correct: 0, expl: "Depuis 2006, Pluton n'est plus considérée comme une planète. Il en reste 8." },
+      { q: "Qui a développé la théorie de la relativité ?", a: ["Einstein","Newton","Darwin","Curie"], correct: 0, expl: "Albert Einstein a publié la théorie de la relativité restreinte en 1905, puis générale en 1915." },
+      { q: "Quelle est la vitesse de la lumière dans le vide ?", a: ["300 000 km/s","150 000 km/s","500 000 km/s","100 000 km/s"], correct: 0, expl: "La lumière voyage à 299 792 458 m/s, soit environ 300 000 km/s." },
+      { q: "Quel élément chimique a le symbole 'Au' ?", a: ["Or","Argent","Cuivre","Aluminium"], correct: 0, expl: "Au vient du latin 'aurum' qui signifie or." },
+      { q: "Combien de chromosomes possède un être humain en paires ?", a: ["23","24","22","46"], correct: 0, expl: "Les humains possèdent 23 paires de chromosomes, soit 46 chromosomes au total." },
+      { q: "Quel scientifique a découvert la pénicilline ?", a: ["Alexander Fleming","Louis Pasteur","Marie Curie","Robert Koch"], correct: 0, expl: "Alexander Fleming a découvert la pénicilline par accident en 1928 en observant une moisissure tuer des bactéries." },
+      { q: "Quelle est la distance moyenne Terre-Soleil en unités astronomiques ?", a: ["1 UA","0,5 UA","2 UA","1,5 UA"], correct: 0, expl: "Par définition, 1 unité astronomique (UA) correspond à la distance moyenne Terre-Soleil, soit environ 150 millions de km." },
+      { q: "Quel est l'élément le plus abondant dans l'univers ?", a: ["Hydrogène","Hélium","Oxygène","Carbone"], correct: 0, expl: "L'hydrogène représente environ 75% de la matière baryonique de l'univers observable." },
+      { q: "Combien de fois la Terre tient-elle dans le Soleil (environ) ?", a: ["1,3 million","300 000","500 000","100 000"], correct: 0, expl: "Le Soleil est tellement grand qu'on pourrait y faire tenir environ 1,3 million de Terres." },
+      { q: "Qui a formulé la loi de la gravitation universelle ?", a: ["Isaac Newton","Galilée","Kepler","Einstein"], correct: 0, expl: "Isaac Newton a formulé la loi de la gravitation universelle en 1687 dans son Principia Mathematica." },
+      { q: "Quel gaz est le principal responsable de l'effet de serre ?", a: ["CO₂","Méthane","Vapeur d'eau","Ozone"], correct: 0, expl: "Le dioxyde de carbone (CO₂) est le principal gaz à effet de serre d'origine humaine, bien que la vapeur d'eau soit naturellement plus abondante." },
+      { q: "À quelle température l'eau bout-elle à pression atmosphérique standard ?", a: ["100°C","90°C","95°C","110°C"], correct: 0, expl: "L'eau bout à 100°C (212°F) au niveau de la mer à pression atmosphérique normale (1013 hPa)." },
+      { q: "Quel est le symbole chimique du Fer ?", a: ["Fe","F","Fr","Fp"], correct: 0, expl: "Fe vient du latin 'ferrum' qui signifie fer." },
+      { q: "Combien de secondes dure une année-lumière... non, combien de km mesure une année-lumière ?", a: ["9 461 milliards de km","1 million de km","300 000 km","150 millions de km"], correct: 0, expl: "Une année-lumière = distance parcourue par la lumière en 1 an ≈ 9 461 milliards de km (9,461 × 10¹² km)." },
+      { q: "Quel médecin français a développé les premiers vaccins modernes contre la rage ?", a: ["Louis Pasteur","Alexander Fleming","Joseph Lister","Claude Bernard"], correct: 0, expl: "Louis Pasteur a mis au point le vaccin contre la rage en 1885 et développé la théorie des germes pathogènes." },
+      { q: "Quel est le numéro atomique de l'oxygène ?", a: ["8","6","7","9"], correct: 0, expl: "L'oxygène a le numéro atomique 8, signifiant qu'il possède 8 protons dans son noyau." },
+      { q: "Quelle planète est connue pour ses anneaux spectaculaires ?", a: ["Saturne","Jupiter","Uranus","Neptune"], correct: 0, expl: "Saturne est célèbre pour ses anneaux composés de glace et de poussière, visibles depuis la Terre avec un télescope." },
+    ]
+  }
+};
+
+let currentCat = null, currentQuestions = [], currentQ = 0, score = 0, streak = 0, answered = false;
+
+function goHome() { showScreen('home'); }
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function buildCatGrid() {
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = '';
+  Object.entries(DATA).forEach(([key, cat]) => {
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `<div class="cat-icon">${cat.icon}</div><div class="cat-name">${cat.name}</div><div class="cat-count">${cat.questions.length} questions</div>`;
+    card.onclick = () => startCategory(key);
+    grid.appendChild(card);
+  });
+}
+
+function startCategory(key) {
+  currentCat = key;
+  currentQuestions = [...DATA[key].questions].sort(() => Math.random() - 0.5);
+  currentQ = 0; score = 0; streak = 0;
+  document.getElementById('cat-label').textContent = DATA[key].icon + ' ' + DATA[key].name;
+  showScreen('quiz');
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = currentQuestions[currentQ];
+  const total = currentQuestions.length;
+  answered = false;
+  document.getElementById('question-num').textContent = `Question ${currentQ + 1} / ${total}`;
+  document.getElementById('question-text').textContent = q.q;
+  document.getElementById('progress-fill').style.width = Math.round((currentQ / total) * 100) + '%';
+  document.getElementById('score-display').textContent = score;
+  const streakEl = document.getElementById('streak-display');
+  if (streak >= 2) { streakEl.style.display = 'inline-block'; streakEl.textContent = '🔥 x' + streak; }
+  else { streakEl.style.display = 'none'; }
+
+  const answersDiv = document.getElementById('answers');
+  answersDiv.innerHTML = '';
+  const shuffled = q.a.map((text, i) => ({ text, i })).sort(() => Math.random() - 0.5);
+  shuffled.forEach(({ text, i }) => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.textContent = text;
+    btn.dataset.index = i;
+    btn.onclick = () => selectAnswer(i, q.correct, btn, q.expl, q.a[q.correct]);
+    answersDiv.appendChild(btn);
+  });
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('feedback').textContent = '';
+  const nb = document.getElementById('next-btn');
+  nb.className = 'next-btn';
+  nb.textContent = currentQ < currentQuestions.length - 1 ? 'Question suivante →' : 'Voir les résultats →';
+}
+
+function selectAnswer(selected, correct, clickedBtn, expl, correctText) {
+  if (answered) return;
+  answered = true;
+  const isCorrect = selected === correct;
+  document.querySelectorAll('.answer-btn').forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === correctText) btn.classList.add('correct');
+  });
+  if (!isCorrect) { clickedBtn.classList.add('wrong'); streak = 0; }
+  else { score += (streak >= 2 ? 2 : 1); streak++; }
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback ' + (isCorrect ? 'correct' : 'wrong') + ' show';
+  fb.textContent = (isCorrect ? '✓ Correct ! ' : '✗ Raté ! ') + expl;
+  document.getElementById('next-btn').classList.add('show');
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= currentQuestions.length) showResult();
+  else showQuestion();
+}
+
+function showResult() {
+  const total = currentQuestions.length;
+  const pct = Math.round((score / total) * 100);
+  let emoji = '😐', msg = 'Pas mal, continue !';
+  if (pct >= 80) { emoji = '🏆'; msg = 'Excellent ! Tu es un champion !'; }
+  else if (pct >= 60) { emoji = '😎'; msg = 'Bien joué, continue comme ça !'; }
+  else if (pct < 40) { emoji = '📚'; msg = 'Il faut réviser un peu !'; }
+  document.getElementById('result-emoji').textContent = emoji;
+  document.getElementById('result-score').textContent = score + '/' + total;
+  document.getElementById('result-label').textContent = pct + '% de bonnes réponses';
+  document.getElementById('result-msg').textContent = msg;
+  showScreen('result');
+}
+
+function replayCategory() { startCategory(currentCat); }
+
+buildCatGrid();
+</script>
+
+
+  <script>
+  if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+  </script>
+
+  <!-- service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
+    }
+  </script>
+
+</body>
+</html>
